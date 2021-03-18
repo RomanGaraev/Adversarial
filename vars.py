@@ -8,5 +8,5 @@ CIFAR_PATH = "datasets\\CIFAR10"
 NUMPY_CIFAR_TRAIN = "datasets\\Train\\"
 NUMPY_CIFAR_TEST = "datasets\\Test\\"
 
-ROBUST_STEPS = 100
+ROBUST_STEPS = 1000
 SHAP_TRAIN_SIZE = 8

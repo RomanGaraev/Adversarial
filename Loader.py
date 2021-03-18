@@ -1,5 +1,5 @@
-from robustness import model_utils, datasets
 from vars import BATCH_SIZE, WORKERS, CIFAR_PATH, NUMPY_CIFAR_TRAIN, NUMPY_CIFAR_TEST
+from robustness import model_utils, datasets
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from numpy import load, save, array
 from torch import tensor
@@ -16,13 +16,12 @@ class CustomSet(Dataset):
     def __len__(self):
         return len(self.sample)
 
-    def __getitem__(self, item):
-        return self.sample[item], self.labels[item]
+    def __getitem__(self, i):
+        return self.sample[i], self.labels[i]
 
-    def add(self, X, y):
-        for i in range(len(X)):
-            self.sample.append(array(X[i]))
-            self.labels.append(array(y[i]))
+    def add(self, x, y):
+        self.sample.extend(x)
+        self.labels.extend(y)
 
     def save(self, path=""):
         save(path + "X.npy", array(self.sample))
@@ -38,6 +37,15 @@ class CustomLoader:
         pass
 
     def get_loaders(self):
+        pass
+
+
+# Base class for loading different models from different sources
+class ModelLoader:
+    def __init__(self):
+        pass
+
+    def load(self):
         pass
 
 
@@ -82,18 +90,9 @@ def get_RestrictedImageNet():
 
 
 # Loaders from robustness package
-def get_loaders(dataset=CustomLoader()):
+def get_loaders(dataset=CustomLoader):
     train_loader, val_loader = dataset.make_loaders(batch_size=BATCH_SIZE, workers=WORKERS)
     return train_loader, val_loader
-
-
-# Base class for loading different models from different sources
-class ModelLoader:
-    def __init__(self):
-        pass
-
-    def load(self):
-        pass
 
 
 '''Implementations of ModelLoader'''
@@ -101,7 +100,7 @@ class ModelLoader:
 
 # Epsilon = 0
 class ResNet50_simple_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader()):
+    def __init__(self, dataset=CustomLoader):
         super(ResNet50_simple_loader, self).__init__()
         self.dataset = dataset
 
@@ -114,7 +113,7 @@ class ResNet50_simple_loader(ModelLoader):
 
 # Epsilon = 0.5
 class ResNet50_l2_0_5_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader()):
+    def __init__(self, dataset=CustomLoader):
         super(ResNet50_l2_0_5_loader, self).__init__()
         self.dataset = dataset
 
@@ -127,7 +126,7 @@ class ResNet50_l2_0_5_loader(ModelLoader):
 
 # Epsilon = 1
 class ResNet50_l2_1_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader()):
+    def __init__(self, dataset=CustomLoader):
         super(ResNet50_l2_1_loader, self).__init__()
         self.dataset = dataset
 

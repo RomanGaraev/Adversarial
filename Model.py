@@ -3,14 +3,11 @@ from vars import SHAP_TRAIN_SIZE
 from numpy import random
 import torch
 import shap
-import gc
-#gc.enable()
-#gc.collect()
 
 
 # Base class for NN models
 class CustomModel(torch.nn.Module):
-    def __init__(self, loader=Loader.ModelLoader()):
+    def __init__(self, loader=Loader.ModelLoader):
         super(CustomModel, self).__init__()
         self.model = loader.load()
         self.model.eval()
@@ -25,8 +22,9 @@ class CustomModel(torch.nn.Module):
 '''Implementation of models'''
 
 
+# loader=Loader.ResNet50_simple_loader(Loader.CIFAR10())
 class ResNet50(CustomModel):
-    def __init__(self, loader=Loader.ResNet50_simple_loader(Loader.CIFAR10())):
+    def __init__(self, loader=Loader.ModelLoader):
         super(ResNet50, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader
@@ -39,7 +37,7 @@ class ResNet50(CustomModel):
 
 # ResNet without penultimate layer
 class ResNet50Feat(CustomModel):
-    def __init__(self, loader=Loader.ResNet50_l2_0_5_loader(dataset=Loader.CIFAR10())):
+    def __init__(self, loader=Loader.ModelLoader):
         super(ResNet50Feat, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader
@@ -52,7 +50,7 @@ class ResNet50Feat(CustomModel):
 
 
 class ResNet50SHAP(CustomModel):
-    def __init__(self, data_loader=Loader.NumpyCIFAR10(), loader=Loader.ResNet50_simple_loader(Loader.CIFAR10())):
+    def __init__(self, data_loader=Loader.CustomLoader, loader=Loader.ModelLoader):
         super(ResNet50SHAP, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader

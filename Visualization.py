@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 from vars import CIFAR_Labels
 
 
-
 # Draw images
 def visualization(x_rand, x_set, x_robust, y):
     fig = plt.figure(figsize=(6, 3))
@@ -16,8 +15,8 @@ def visualization(x_rand, x_set, x_robust, y):
     second_image.set_yticks([])
     third_image.set_xticks([])
     third_image.set_yticks([])
-    first_image.set_title("Initial (noise) image")
-    second_image.set_title("Image from set")
+    first_image.set_title("Noise start image")
+    second_image.set_title("Target image")
     third_image.set_title("Robust image")
 
     first_image.imshow(x_rand)
@@ -42,6 +41,7 @@ def error_plot():
     plt.xlabel("Iterations")
     plt.ylabel("L2 norm of error")
     plt.show()
+
 
 def test(x):
     fig = plt.figure(figsize=(6, 3))
