@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 from vars import CIFAR_Labels
+import matplotlib.pyplot as plt
 
 
 # Draw images

@@ -1,6 +1,8 @@
+from vars import SHAP_TRAIN_SIZE, MODELS_PATH
 import Loader
-from vars import SHAP_TRAIN_SIZE
+from os.path import join
 from numpy import random
+from tqdm import tqdm
 import torch
 import shap
 
@@ -18,6 +20,9 @@ class CustomModel(torch.nn.Module):
     def forward(self, x):
         return self.model(x)
 
+    def train(self, data_loader):
+        pass
+
 
 '''Implementation of models'''
 
@@ -33,6 +38,37 @@ class ResNet50(CustomModel):
 
     def forward(self, x):
         return self.model(x)
+
+    def train(self, data_loader=Loader.CustomSetLoader):
+        self.model.train()
+        train_loader, val_loader = data_loader.get_loaders()
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, patience=3, eps=0.001, verbose=True)
+        criteria = torch.nn.CrossEntropyLoss()
+
+        for epoch in range(0):
+            print("Epoch ", epoch)
+            bar = tqdm(train_loader)
+            for X, y in bar:
+                X, y = X.cuda(), y.cuda()
+                optimizer.zero_grad()
+                out = self.model(X)
+                loss = criteria(out, y)
+                loss.backward()
+                optimizer.step()
+                scheduler.step(metrics=loss)
+                bar.set_postfix({"Loss": format(loss, '.4f')})
+        torch.save(self.model.state_dict(), join(MODELS_PATH, "resnet.pt"))
+        # Evaluation
+        self.validate(train_loader, desc="Train set")
+        self.validate(val_loader, desc="Test set")
+
+    def validate(self, loader, desc="Train"):
+        corr = 0
+        for X, y in tqdm(loader, desc=desc):
+            _, pred = self.model(X.cuda()).topk(1, 1)
+            corr += (pred == y.cuda())
+        print(f"{desc} accuracy: {(corr / len(loader) * 100)}")
 
 
 # ResNet without penultimate layer
@@ -50,7 +86,7 @@ class ResNet50Feat(CustomModel):
 
 
 class ResNet50SHAP(CustomModel):
-    def __init__(self, data_loader=Loader.CustomLoader, loader=Loader.ModelLoader):
+    def __init__(self, data_loader=Loader.CustomSetLoader, loader=Loader.ModelLoader):
         super(ResNet50SHAP, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader
@@ -65,3 +101,4 @@ class ResNet50SHAP(CustomModel):
     def forward(self, x):
         # SHAP(g(x))
         return self.explainer.shap_values(x)
+

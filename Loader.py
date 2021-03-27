@@ -1,10 +1,11 @@
-from vars import BATCH_SIZE, WORKERS, CIFAR_PATH, NUMPY_CIFAR_TRAIN, NUMPY_CIFAR_TEST
-from robustness import model_utils, datasets
+from vars import BATCH_SIZE, WORKERS, CIFAR_PATH, NUMPY_CIFAR_TRAIN, NUMPY_CIFAR_TEST, MODELS_PATH
 from torch.utils.data import Dataset, DataLoader, TensorDataset
+from robustness import model_utils, datasets
 from numpy import load, save, array
 from torch import tensor
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+from os.path import join
+from os import environ
+environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 # Structure for robust set storing
@@ -23,13 +24,13 @@ class CustomSet(Dataset):
         self.sample.extend(x)
         self.labels.extend(y)
 
-    def save(self, path=""):
-        save(path + "X.npy", array(self.sample))
-        save(path + "y.npy", array(self.labels))
+    def save(self, path=NUMPY_CIFAR_TRAIN):
+        save(join(path, "X.npy"), [array(i) for i in self.sample])
+        save(join(path, "y.npy"), [array(i) for i in self.labels])
 
 
 # Base class for data set loading
-class CustomLoader:
+class CustomSetLoader:
     def __init__(self):
         pass
 
@@ -52,7 +53,7 @@ class ModelLoader:
 ''' Implementation of DataLoader '''
 
 
-class CIFAR10(CustomLoader):
+class CIFAR10(CustomSetLoader):
     def __init__(self):
         super(CIFAR10, self).__init__()
 
@@ -62,18 +63,18 @@ class CIFAR10(CustomLoader):
 
     def get_loaders(self):
         self.load()
-        train_loader, val_loader = self.dataset.make_loaders(batch_size=BATCH_SIZE, workers=WORKERS)
+        train_loader, val_loader = self.dataset.make_loaders(batch_size=BATCH_SIZE, workers=WORKERS, shuffle_train=False)
         return train_loader, val_loader
 
 
-class NumpyCIFAR10(CustomLoader):
+class NumpyCIFAR10(CustomSetLoader):
     def __init__(self):
         super(NumpyCIFAR10, self).__init__()
 
     def load(self):
         # [X_train, y_train], [X_test, y_test]
-        return [tensor(load(NUMPY_CIFAR_TRAIN + "X.npy")), tensor(load(NUMPY_CIFAR_TRAIN + "y.npy"))], \
-               [tensor(load(NUMPY_CIFAR_TEST + "X.npy")), tensor(load(NUMPY_CIFAR_TEST + "y.npy"))]
+        return [tensor(load(join(NUMPY_CIFAR_TRAIN, "X.npy"))), tensor(load(join(NUMPY_CIFAR_TRAIN, "y.npy")))], \
+               [tensor(load(join(NUMPY_CIFAR_TEST, "X.npy"))),  tensor(load(join(NUMPY_CIFAR_TEST, "y.npy")))]
 
     def get_loaders(self):
         train, test = self.load()
@@ -89,49 +90,43 @@ def get_RestrictedImageNet():
     pass
 
 
-# Loaders from robustness package
-def get_loaders(dataset=CustomLoader):
-    train_loader, val_loader = dataset.make_loaders(batch_size=BATCH_SIZE, workers=WORKERS)
-    return train_loader, val_loader
-
-
 '''Implementations of ModelLoader'''
 
 
 # Epsilon = 0
 class ResNet50_simple_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader):
+    def __init__(self, dataset=CustomSetLoader):
         super(ResNet50_simple_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
         super(ResNet50_simple_loader, self).load()
         pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
-                                                                 resume_path='models\\cifar_nat.pt')
+                                                                 resume_path=join(MODELS_PATH, "cifar_nat.pt"))
         return pretrained_model
 
 
 # Epsilon = 0.5
 class ResNet50_l2_0_5_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader):
+    def __init__(self, dataset=CustomSetLoader):
         super(ResNet50_l2_0_5_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
         super().load()
         pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
-                                                                 resume_path='models\\cifar_l2_0_5.pt')
+                                                                 resume_path=join(MODELS_PATH, "cifar_l2_0_5.pt"))
         return pretrained_model
 
 
 # Epsilon = 1
 class ResNet50_l2_1_loader(ModelLoader):
-    def __init__(self, dataset=CustomLoader):
+    def __init__(self, dataset=CustomSetLoader):
         super(ResNet50_l2_1_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
         super().load()
         pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
-                                                                 resume_path='models\\cifar_l2_1_0.pt')
+                                                                 resume_path=join(MODELS_PATH, "cifar_l2_1_0.pt"))
         return pretrained_model

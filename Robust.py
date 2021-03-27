@@ -1,8 +1,8 @@
-from vars import ROBUST_STEPS
 from Visualization import visualization
+from vars import ROBUST_STEPS
 import Loader
 import Model
-from torch import norm, renorm, clamp
+from torch import norm, renorm, clamp, cuda
 from tqdm.auto import tqdm
 
 
@@ -48,18 +48,22 @@ https://openreview.net/pdf/665eaf462c7aae47f0d7720f888add00dcbb24f3.pdf
 # args:
 #       model - what model to use to extract robust features, i.e. ResNet50Feat
 # data_loader - what data set should be modified, i.e. CIFAR10()
-def create_robust(model=Model.CustomModel, data_loader=Loader.CustomLoader):
+#      offset - from which position of data set start the function
+def create_robust(model=Model.CustomModel, data_loader=Loader.CustomLoader, offset=0):
     robust_set = Loader.CustomSet()
     # [0] == train set loader
     loader = data_loader.get_loaders()[0]
     iterator = iter(loader)
     inner_i = 1
-
     # Current image and label, will be update in loop
     x_tar, y_tar = next(iterator)
+    for i in range(offset):
+        inner_i += 1
+        x_tar, y_tar = next(iterator)
     # Future candidate image to robust_set: random image from data set,
     # because data set is shuffled and next image is random
     for x_new, y_new in iterator:
+        cuda.empty_cache()
         model.zero_grad()
         # Copy random image to let it safe
         x_copy = x_new.clone()
@@ -88,13 +92,16 @@ def create_robust(model=Model.CustomModel, data_loader=Loader.CustomLoader):
                       y_tar[0].data)
         # Now let's modify this image
         x_tar, y_tar = x_new, y_new
+        # By default will be save to NUMPY_CIFAR_TRAIN
+        if inner_i % 10 == 0:
+          robust_set.save()
     robust_set.save()
 
 
-def create_non_robust(model=Model.CustomModel, data_loader=Loader.CustomLoader):
+def create_non_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader):
     raise NotImplementedError
 
 
 if __name__ == '__main__':
     model = Model.ResNet50Feat(loader=Loader.ResNet50_l2_0_5_loader(Loader.CIFAR10()))
-    create_robust(model=model, data_loader=Loader.CIFAR10())
+    create_robust(model=model, data_loader=Loader.CIFAR10(), offset=100)
