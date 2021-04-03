@@ -1,6 +1,6 @@
 from Vars import CIFAR_Labels
+from numpy import arange, transpose
 import matplotlib.pyplot as plt
-from numpy import arange
 
 
 def compare(x_rand, x_set, x_robust, y):
@@ -9,6 +9,11 @@ def compare(x_rand, x_set, x_robust, y):
     which started from the initial and optimized to the target, i.e. has the closest representation to it.
     y correspond to target image class
     """
+    # 3x32x32 -> 32x32x3
+    x_rand = transpose(x_rand.detach().numpy(), axes=(1, 2, 0))
+    x_set = transpose(x_set.detach().numpy(), axes=(1, 2, 0))
+    x_robust = transpose(x_robust.detach().numpy(), axes=(1, 2, 0))
+
     fig = plt.figure(figsize=(6, 3))
     plt.subplots_adjust(wspace=0.3)
     first_image = fig.add_subplot(1, 3, 1)
@@ -27,19 +32,25 @@ def compare(x_rand, x_set, x_robust, y):
     first_image.imshow(x_rand)
     second_image.imshow(x_set)
     third_image.imshow(x_robust)
-    plt.suptitle("Image class: " + CIFAR_Labels[y])
+    plt.suptitle("Image class: " + CIFAR_Labels[y.data])
     plt.show()
 
 
-def image_show(x):
-    fig = plt.figure(figsize=(6, 3))
-    plt.subplots_adjust(wspace=0.3)
-    first_image = fig.add_subplot(1, 1, 1)
-    first_image.imshow(x)
+def image_show(image, label):
+    """
+    Draw only one image
+    """
+    plt.imshow(transpose(image, axes=(1, 2, 0)))
+    plt.suptitle("Image class: " + CIFAR_Labels[label.data])
     plt.show()
 
 
 def confusion_mat(conf):
+    """
+    Draw confusion matrix from
+    :param conf:
+    :return:
+    """
     fig, ax = plt.subplots()
     im = ax.imshow(conf)
     # We want to show all ticks...
@@ -59,3 +70,4 @@ def confusion_mat(conf):
                            ha="center", va="center", color="w")
     fig.tight_layout()
     plt.show()
+

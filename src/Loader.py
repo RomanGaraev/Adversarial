@@ -1,9 +1,10 @@
 from Vars import BATCH_SIZE, WORKERS, CIFAR_PATH, NUMPY_CIFAR_TRAIN, NUMPY_CIFAR_TEST, MODELS_PATH
-from torch.utils.data import Dataset, DataLoader, TensorDataset
-from robustness import model_utils, datasets
-from numpy import load, save, array
-from torch import tensor, nn, load as ch_load
 from resnets import ResNet18
+from torch.utils.data import Dataset, DataLoader, TensorDataset
+from torch import tensor, nn, load as ch_load
+from torchvision import datasets, transforms
+from numpy import load, save, array
+from robustness import model_utils
 from os.path import join
 from os import environ
 environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -59,12 +60,15 @@ class CIFAR10(CustomSetLoader):
         super(CIFAR10, self).__init__()
 
     def load(self):
-        return datasets.CIFAR(CIFAR_PATH)
+        # Train, test sets
+        return datasets.CIFAR10(root=CIFAR_PATH, transform=transforms.ToTensor(), train=True),\
+               datasets.CIFAR10(root=CIFAR_PATH, transform=transforms.ToTensor(), train=False)
 
     def get_loaders(self):
-        dataset = self.load()
-        train_loader, val_loader = dataset.make_loaders(batch_size=BATCH_SIZE, workers=WORKERS, shuffle_train=False)
-        return {"train": train_loader, "test": val_loader}
+        train_set, test_set = self.load()
+        train_loader = DataLoader(train_set, shuffle=False, batch_size=BATCH_SIZE, num_workers=WORKERS)
+        test_loader = DataLoader(test_set, shuffle=False, batch_size=BATCH_SIZE, num_workers=WORKERS)
+        return {"train": train_loader, "test": test_loader}
 
 
 class NumpyCIFAR10(CustomSetLoader):
@@ -148,8 +152,8 @@ class ResNet18_loader(ModelLoader):
 
 # Create test CIFAR data set in numpy form
 if __name__ == "__main__":
-    tr_load, val_load = CIFAR10().get_loaders()
+    tr_load = CIFAR10().get_loaders()['test']
     test = CustomSet()
-    for X, y in tr_load:
+    for X,y in tr_load:
         test.add(X, y)
     test.save(path=MODELS_PATH)

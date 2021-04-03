@@ -1,8 +1,10 @@
 from Vars import MODELS_PATH
 import Loader
 import torch
-import tqdm
+from tqdm import tqdm
 from os.path import join
+
+
 def train(self, data_loader=Loader.CustomSetLoader):
     self.model.train()
     dict_load = data_loader.get_loaders()

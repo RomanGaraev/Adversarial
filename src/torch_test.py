@@ -12,7 +12,7 @@ def test(model, dataloader):
     for X, y in tqdm(dataloader):
         y_pred = np.argmax(model(X).cpu().detach().numpy(), axis=1)
         pred.extend(y_pred)
-        Y.extend(y)
+        Y.extend(y.cpu().detach().numpy())
     acc = len([i for i, x in enumerate(pred) if Y[i] == x]) / len(pred)
     print(f"Accuracy: {acc}")
     return pred, Y
@@ -25,6 +25,6 @@ def test_vis(model, dataloader):
 
 if __name__ == "__main__":
     print("Testing on regular CIFAR test set...")
-    test_vis(model=ResNet18(), dataloader=CIFAR10().get_loaders()['test'])
-    print("Testing on robust CIFAR train set...")
-    test_vis(model=ResNet18(), dataloader=NumpyCIFAR10().get_loaders()['train'])
+    test_vis(model=ResNet18(), dataloader=CIFAR10().get_loaders()['train'])
+    #print("Testing on robust CIFAR train set...")
+    #test_vis(model=ResNet18(), dataloader=NumpyCIFAR10().get_loaders()['train'])

@@ -1,34 +1,43 @@
 from Loader import CIFAR10, CustomSetLoader, CustomSet
 from Model import CustomModel, ResNet18
 from Vars import ATTACK_PATH, device
-from foolbox import PyTorchModel
-from foolbox import attacks
+from art.estimators.classification import PyTorchClassifier
+from art.attacks.evasion import PixelAttack
+from torch import nn, optim
+from numpy import argmax
 from tqdm import tqdm
 
 
 class Attack:
     def __init__(self, model=CustomModel, data_loader=CustomSetLoader().get_loaders()):
-        #self.f_model = PyTorchModel(model, bounds=(-5, 5))
-        self.f_model = PyTorchModel(model, bounds=(-1, 1))
+        """
+        Class for creating adversarial examples by different attacks from foolbox
+        :param model: target model, e.g. ResNet50()
+        :param data_loader: target data set loader, e.g. CIFAR10().get_loaders()['train']
+        """
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.01)
+        model.eval()
+        self.f_model = PyTorchClassifier(model=model, input_shape=(3, 32, 32), clip_values=(0, 1),
+                                         loss=criterion, optimizer=optimizer, nb_classes=10)
         self.loader = data_loader
         self.adv_examples = CustomSet()
 
-    def make_attack(self, attack=attacks.L2PGD(steps=100), epsilons=0.25):
-        correct = 0
-        adv_correct = 0
-        all = 0
-        print("Start creating adversarial examples...")
+    def make_attack(self):
+        attack = PixelAttack(classifier=self.f_model)
         bar = tqdm(self.loader)
+        print("Start creating adversarial examples...")
+
+        Y = []
+        Y_pred = []
         for X, y in bar:
-            X, y = X.to(device), y.to(device)
-            raw, clipped, is_adv = attack(self.f_model, X, y, epsilons=epsilons)
-            adv_correct += is_adv.detach().cpu().sum()
-            self.adv_examples.add(clipped.cpu().detach().numpy(), y.cpu().detach().numpy())
-            all += len(y)
-            bar.set_postfix({"Adversarial ": float(adv_correct) / all})
+            clipped = attack.generate(X.detach().cpu().numpy())
+            pred = argmax(self.f_model.predict(clipped), axis=1)
+            Y_pred.extend(pred)
+            Y.extend(y)
+            self.adv_examples.add(clipped, y.detach().cpu().numpy())
+
         print("Adversarial examples are created!")
-        print(f"The clean accuracy is {correct / len(self.loader) * 100.}%")
-        print(f"The adversarial accuracy is {adv_correct / len(self.loader) * 100.}%")
         return self.adv_examples
 
     def save(self, path=ATTACK_PATH):
@@ -37,6 +46,4 @@ class Attack:
 
 if __name__ == "__main__":
     at = Attack(model=ResNet18(), data_loader=CIFAR10().get_loaders()['train'])
-    a = attacks.L2DeepFoolAttack()
     at.make_attack()
-    at.save()

@@ -100,15 +100,12 @@ def create_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader, o
         robust_set.add(x_copy, y_tar)
 
         if plot:
-            compare(x_new[0].clone().permute(1, 2, 0).detach().numpy(),
-                    x_tar[0].permute(1, 2, 0),
-                    x_copy[0].permute(1, 2, 0).detach().numpy(),
-                    y_tar[0].data)
+            compare(x_new[0].clone(), x_tar[0].clone(), x_copy[0].clone(), y_tar[0].data)
         # Now let's modify this image
         x_tar, y_tar = x_new, y_new
         # Checkpoint, by default will be saved to NUMPY_CIFAR_TRAIN
         if inner_i % 10 == 0:
-          robust_set.save()
+            robust_set.save()
     robust_set.save()
     return robust_set
 
