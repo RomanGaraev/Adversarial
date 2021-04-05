@@ -1,7 +1,7 @@
+from os import pardir, environ
 from os.path import join
-from os import pardir
 from torch import cuda
-
+environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 device = 'cuda' if cuda.is_available() else 'cpu'
 

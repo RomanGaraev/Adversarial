@@ -1,13 +1,12 @@
 from Vars import BATCH_SIZE, WORKERS, CIFAR_PATH, NUMPY_CIFAR_TRAIN, NUMPY_CIFAR_TEST, MODELS_PATH
 from resnets import ResNet18
+
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from torch import tensor, nn, load as ch_load
 from torchvision import datasets, transforms
 from numpy import load, save, array
 from robustness import model_utils
 from os.path import join
-from os import environ
-environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 # Structure for robust set storing

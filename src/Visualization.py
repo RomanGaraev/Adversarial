@@ -1,5 +1,6 @@
 from Vars import CIFAR_Labels
-from numpy import arange, transpose
+
+from numpy import arange, transpose, trace, array
 import matplotlib.pyplot as plt
 
 
@@ -45,29 +46,35 @@ def image_show(image, label):
     plt.show()
 
 
-def confusion_mat(conf):
+def matrix_acc(conf):
+    return f"Accuracy {trace(conf) / sum(sum(conf))}"
+
+
+def confusion_mat(conf, labels=CIFAR_Labels):
     """
     Draw confusion matrix from
-    :param conf:
-    :return:
+    :param conf: 2D-numpy matrix
     """
     fig, ax = plt.subplots()
-    im = ax.imshow(conf)
-    # We want to show all ticks...
-    ax.set_xticks(arange(len(CIFAR_Labels)))
-    ax.set_yticks(arange(len(CIFAR_Labels)))
-    # ... and label them with the respective list entries
-    ax.set_xticklabels(CIFAR_Labels)
-    ax.set_yticklabels(CIFAR_Labels)
-    # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor")
+    ax.imshow(conf)
+    ax.set_xticks(arange(len(labels)))
+    ax.set_yticks(arange(len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
 
+    dims = conf.shape[0]
     # Loop over data dimensions and create text annotations.
-    for i in range(len(CIFAR_Labels)):
-        for j in range(len(CIFAR_Labels)):
-            text = ax.text(j, i, conf[i, j],
-                           ha="center", va="center", color="w")
+    for i in range(dims):
+        for j in range(dims):
+            ax.text(j, i, conf[i, j], ha="center", va="center", color="w")
     fig.tight_layout()
-    plt.show()
 
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    plt.show()
+    print(matrix_acc(conf))
+
+
+if __name__ == "__main__":
+    confusion_mat(array([[0, 1, 2], [3, 4, 5], [6, 7, 8]]), labels=["a", "b", "c"])

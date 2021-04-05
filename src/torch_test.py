@@ -1,6 +1,8 @@
-from Loader import *
-from Model import *
 from Visualization import confusion_mat
+from Loader import CIFAR10
+from Model import ResNet18
+
+
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 import numpy as np
