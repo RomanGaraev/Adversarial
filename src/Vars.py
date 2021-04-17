@@ -12,6 +12,7 @@ WORKERS = 4
 
 # Used for visualisation
 CIFAR_Labels = ["Airplane", "Automobile", "Bird", "Cat", "Deer", "Dog", "Frog", "Horse", "Ship", "Truck"]
+PLOTS_PATH = join(pardir, "results")
 
 # Adversarial examples path
 ATTACK_PATH = join(pardir, "datasets", "Attacks")
@@ -26,4 +27,4 @@ MODELS_PATH = join(pardir, "models")
 # Steps of PGD optimization for robust image creation
 ROBUST_STEPS = 1000
 # Amount of samples for shap training
-SHAP_TRAIN_SIZE = 8
+SHAP_TRAIN_SIZE = 100

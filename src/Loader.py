@@ -3,7 +3,7 @@ from resnets import ResNet18
 
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from torch import tensor, nn, load as ch_load
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 from numpy import load, save, array
 from robustness import model_utils
 from os.path import join
@@ -97,7 +97,7 @@ def get_RestrictedImageNet():
 '''Implementations of ModelLoader'''
 
 
-# Epsilon = 0
+# Loader from simple pytorch
 class ResNet50_simple_loader(ModelLoader):
     def __init__(self, dataset=CustomSetLoader):
         super(ResNet50_simple_loader, self).__init__()
@@ -105,9 +105,22 @@ class ResNet50_simple_loader(ModelLoader):
 
     def load(self):
         super(ResNet50_simple_loader, self).load()
+        pretrained_model = models.resnet50()
+        pretrained_model.fc = nn.Linear(2048, 10)
+        pretrained_model.load_state_dict(ch_load(join(MODELS_PATH, "resnet50.pt")))
+        return pretrained_model
+
+# Epsilon = 0
+class ResNet50_0_loader(ModelLoader):
+    def __init__(self, dataset=CustomSetLoader):
+        super(ResNet50_0_loader, self).__init__()
+        self.dataset = dataset
+
+    def load(self):
+        super(ResNet50_0_loader, self).load()
         pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
                                                                  resume_path=join(MODELS_PATH, "cifar_nat.pt"))
-        return pretrained_model
+        return nn.Sequential(pretrained_model.normalizer, pretrained_model.model)
 
 
 # Epsilon = 0.5
@@ -153,6 +166,6 @@ class ResNet18_loader(ModelLoader):
 if __name__ == "__main__":
     tr_load = CIFAR10().get_loaders()['test']
     test = CustomSet()
-    for X,y in tr_load:
+    for X, y in tr_load:
         test.add(X, y)
     test.save(path=MODELS_PATH)

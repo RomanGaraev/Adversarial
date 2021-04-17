@@ -1,6 +1,6 @@
 from Loader import CIFAR10, CustomSetLoader, CustomSet
 from Model import CustomModel, ResNet18
-from Vars import ATTACK_PATH, device
+from Vars import ATTACK_PATH
 from Visualization import matrix_acc
 
 from art.estimators.classification import PyTorchClassifier
@@ -22,10 +22,10 @@ class Attack:
         :param classes: output shape
         """
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.01)
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
         model.eval()
         self.f_model = PyTorchClassifier(model=model, input_shape=inp_shape, clip_values=(0, 1),
-                                         loss=criterion, optimizer=optimizer, nb_classes=classes)
+                                         loss=criterion, optimizer=optimizer, nb_classes=classes,device_type="gpu")
         self.loader = data_loader
         self.adv_examples = CustomSet()
 
@@ -36,11 +36,11 @@ class Attack:
         Y = []
         Y_pred = []
         for X, y in bar:
-            clipped = attack.generate(X.to(device))
+            clipped = attack.generate(X)
             pred = argmax(self.f_model.predict(clipped), axis=1)
             Y_pred.extend(pred)
             Y.extend(y)
-            self.adv_examples.add(clipped.detach().cpu().numpy(), y.detach().cpu().numpy())
+            self.adv_examples.add(clipped, y.detach().cpu().numpy())
 
         print("Adversarial examples are created!")
         return confusion_matrix(y_true=Y, y_pred=Y_pred)
@@ -52,19 +52,21 @@ class Attack:
 def attacks_test(repeats=3, epsilon=0.25):
     at = Attack(model=ResNet18(), data_loader=CIFAR10().get_loaders()['train'])
     model = at.f_model
-    attacks = {"FGSM l2"    : ev.FastGradientMethod(estimator=model, norm=2, eps=epsilon),
-               "FGSM linf"  : ev.FastGradientMethod(estimator=model, norm=inf, eps=epsilon),
-               "PGD l2 100" : ev.ProjectedGradientDescentPyTorch(estimator=model, norm=2, eps=epsilon, max_iter=100),
-               "PGD l2 1000": ev.ProjectedGradientDescentPyTorch(estimator=model, norm=2, eps=epsilon, max_iter=1000),
-               "PGD linf"   : ev.ProjectedGradientDescentPyTorch(estimator=model, norm=inf, eps=epsilon, max_iter=100),
-               "DeepFool"   : ev.DeepFool(classifier=model, epsilon=epsilon, batch_size=32, verbose=False)
+    attacks = {"FGSM l2"     : ev.FastGradientMethod(estimator=model, norm=2, eps=epsilon),
+               "FGSM linf"   : ev.FastGradientMethod(estimator=model, norm=inf, eps=epsilon),
+               "PGD l2 100"  : ev.ProjectedGradientDescentPyTorch(estimator=model, norm=2, eps=epsilon, max_iter=100),
+               "PGD l2 1000" : ev.ProjectedGradientDescentPyTorch(estimator=model, norm=2, eps=epsilon, max_iter=1000),
+               "PGD linf"    : ev.ProjectedGradientDescentPyTorch(estimator=model, norm=inf, eps=epsilon, max_iter=100),
+               "DeepFool"    : ev.DeepFool(classifier=model, epsilon=epsilon, batch_size=32, verbose=False),
+               "C-W l2 100"  : ev.CarliniL2Method(classifier=model, max_iter=100,),
+               "C-W linf 100": ev.CarliniLInfMethod(classifier=model, max_iter=100, eps=epsilon)
                }
     # "Pixel" : ev.PixelAttack(classifier=model)
     for _ in range(repeats):
         for name, attack in attacks.items():
             print(f"{name} attack in processing...")
             conf = at.make_attack(attack=attack)
-            print(matrix_acc(conf))
+            print(f"{matrix_acc(conf)} for {name}")
 
 
 if __name__ == "__main__":
