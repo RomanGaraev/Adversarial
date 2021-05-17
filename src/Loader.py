@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from torch import tensor, nn, load as ch_load
 from torchvision import datasets, transforms, models
 from numpy import load, save, array
-from robustness import model_utils
+from robustness import model_utils,datasets as rob_dataset
 from os.path import join
 
 
@@ -112,40 +112,52 @@ class ResNet50_simple_loader(ModelLoader):
 
 # Epsilon = 0
 class ResNet50_0_loader(ModelLoader):
-    def __init__(self, dataset=CustomSetLoader):
+    def __init__(self, dataset=rob_dataset.CIFAR(data_path=CIFAR_PATH)):
         super(ResNet50_0_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
         super(ResNet50_0_loader, self).load()
-        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
+        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset,
                                                                  resume_path=join(MODELS_PATH, "cifar_nat.pt"))
-        return nn.Sequential(pretrained_model.normalizer, pretrained_model.model)
+        return pretrained_model
 
 
 # Epsilon = 0.5
 class ResNet50_l2_0_5_loader(ModelLoader):
-    def __init__(self, dataset=CustomSetLoader):
+    def __init__(self, dataset=rob_dataset.CIFAR(data_path=CIFAR_PATH)):
         super(ResNet50_l2_0_5_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
-        super().load()
-        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
+        super(ResNet50_l2_0_5_loader, self).load()
+        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset,
                                                                  resume_path=join(MODELS_PATH, "cifar_l2_0_5.pt"))
         return pretrained_model
 
 
 # Epsilon = 1
 class ResNet50_l2_1_loader(ModelLoader):
-    def __init__(self, dataset=CustomSetLoader):
+    def __init__(self, dataset=rob_dataset.CIFAR(data_path=CIFAR_PATH)):
         super(ResNet50_l2_1_loader, self).__init__()
         self.dataset = dataset
 
     def load(self):
         super().load()
-        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset.load(),
+        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset,
                                                                  resume_path=join(MODELS_PATH, "cifar_l2_1_0.pt"))
+        return pretrained_model
+
+
+class ResNet50_inf_loader(ModelLoader):
+    def __init__(self, dataset=rob_dataset.CIFAR(data_path=CIFAR_PATH)):
+        super(ResNet50_inf_loader, self).__init__()
+        self.dataset = dataset
+
+    def load(self):
+        super(ResNet50_inf_loader, self).load()
+        pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset,
+                                                                 resume_path=join(MODELS_PATH, "cifar_linf_8.pt"))
         return pretrained_model
 
 

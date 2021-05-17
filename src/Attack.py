@@ -1,7 +1,7 @@
-from Loader import CIFAR10, CustomSetLoader, CustomSet
-from Model import CustomModel, ResNet18
+from Loader import CustomSetLoader, CustomSet, CIFAR10, ResNet50_l2_0_5_loader
+from Model import CustomModel, ResNet18, ResNet50
 from Vars import ATTACK_PATH
-from Visualization import matrix_acc
+from Visualization import confusion_mat
 
 from art.estimators.classification import PyTorchClassifier
 from sklearn.metrics import confusion_matrix
@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 
 class Attack:
-    def __init__(self, model=CustomModel, data_loader=CustomSetLoader().get_loaders(),
+    def __init__(self, model:CustomModel, data_loader=CustomSetLoader().get_loaders(),
                  inp_shape=(3, 32, 32), classes=10):
         """
         Class for creating adversarial examples by different attacks from foolbox
@@ -66,8 +66,13 @@ def attacks_test(repeats=3, epsilon=0.25):
         for name, attack in attacks.items():
             print(f"{name} attack in processing...")
             conf = at.make_attack(attack=attack)
-            print(f"{matrix_acc(conf)} for {name}")
+            print(conf)
+            #print(f"{matrix_acc(conf)} for {name}")
 
 
 if __name__ == "__main__":
-    attacks_test()
+    #attacks_test()
+    model = Attack(model=ResNet50(loader=ResNet50_l2_0_5_loader(dataset=CIFAR10())), data_loader=CIFAR10().get_loaders()['test'])
+    model_f = model.f_model
+    attack = ev.ProjectedGradientDescentPyTorch(estimator=model_f, norm=inf, eps=0.025, max_iter=5, verbose=False)
+    confusion_mat(model.make_attack(attack=attack), case="PGD-linf-5", save=False)

@@ -3,7 +3,7 @@ from Visualization import compare
 import Loader
 import Model
 
-from torch import norm, renorm, clamp
+from torch import norm, renorm, clamp, cuda
 from tqdm.auto import tqdm
 
 
@@ -63,7 +63,7 @@ def create_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader, o
     :param plot: bool, draw or not initial, target and robust images
     :return: CustomSet, lists of robust images and their labels
     """
-
+    model.to(device)
     robust_set = Loader.CustomSet()
     # [0] == train set loader
     loader = data_loader.get_loaders()['train']
@@ -77,8 +77,7 @@ def create_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader, o
     # Future candidate image to robust_set: random image from data set,
     # because data set is shuffled and next image is random
     for x_new, y_new in iterator:
-        device.empty_cache()
-        model.zero_grad()
+        cuda.empty_cache()
         # Copy random image to let it safe
         x_copy = x_new.clone()
         x_copy.requires_grad = True
@@ -116,5 +115,5 @@ def create_non_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoade
 
 
 if __name__ == '__main__':
-    model = Model.ResNet50Feat(loader=Loader.ResNet50_l2_0_5_loader(Loader.CIFAR10()))
-    create_robust(model=model, data_loader=Loader.CIFAR10(), offset=100)
+    model = Model.ResNet50Feat(loader=Loader.ResNet50_inf_loader())
+    create_robust(model=model, data_loader=Loader.CIFAR10(), plot=True)

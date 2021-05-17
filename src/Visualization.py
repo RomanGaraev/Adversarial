@@ -1,6 +1,6 @@
 from Vars import CIFAR_Labels, PLOTS_PATH
 
-from numpy import arange, transpose, trace, array
+from numpy import arange, transpose, trace
 import matplotlib.pyplot as plt
 from os.path import join
 
@@ -47,10 +47,6 @@ def image_show(image, label):
     plt.show()
 
 
-#def matrix_acc(conf):
-#    return f"Accuracy {trace(conf) / sum(sum(conf))}"
-
-
 def confusion_mat(conf, labels=CIFAR_Labels, save=False, case="PGD-100-linf-0,025"):
     """
     Draw confusion matrix from
@@ -79,6 +75,7 @@ def confusion_mat(conf, labels=CIFAR_Labels, save=False, case="PGD-100-linf-0,02
     fig.show()
     if save:
         fig.savefig(join(PLOTS_PATH, case))
+    print(f"Accuracy {trace(conf) / sum(sum(conf))}")
 
 """
  confusion_mat(array(

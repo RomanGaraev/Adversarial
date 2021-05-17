@@ -1,9 +1,9 @@
-from Vars import SHAP_TRAIN_SIZE
+from Vars import SHAP_TRAIN_SIZE, device
 import Loader
 
-from shap import DeepExplainer
+from shap import GradientExplainer
 from numpy import random
-from torch import nn
+from torch import nn, stack
 
 
 # Base class for NN models
@@ -44,7 +44,6 @@ class ResNet50Feat(CustomModel):
         super(ResNet50Feat, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader
-        # Normalizer hits creating robust - increase error
         self.model = nn.Sequential(pretrained_model.normalizer,
                                    *list(pretrained_model.model.children())[:-1], nn.Flatten())
 
@@ -53,17 +52,17 @@ class ResNet50Feat(CustomModel):
 
 
 class ResNet50SHAP(CustomModel):
-    def __init__(self, data_loader=Loader.CustomSetLoader, loader=Loader.ResNet50_l2_0_5_loader()):
+    def __init__(self, data_loader=Loader.CustomSetLoader(), loader=Loader.ResNet50_l2_0_5_loader()):
         super(ResNet50SHAP, self).__init__(loader)
         pretrained_model = super().get_model()
-        self.loader = loader
         self.model = nn.Sequential(pretrained_model.normalizer,
                                    *list(pretrained_model.model.children())[:-1], nn.Flatten())
+        self.data = data_loader
         # Train shap explainer
-        train = data_loader.load()['train']
-        x_train = train[0]
-        background = x_train[random.choice(x_train.shape[0], SHAP_TRAIN_SIZE, replace=False)].cuda()
-        self.explainer = DeepExplainer(self.model, background)
+        train, _ = self.data.load()
+        choice = random.choice(len(train), SHAP_TRAIN_SIZE, replace=False)
+        background = stack([train[i][0].to(device) for i in choice])
+        self.explainer = GradientExplainer(model=self.model, data=background)
 
     def forward(self, x):
         # SHAP(g(x))
@@ -82,5 +81,5 @@ class ResNet18(CustomModel):
 
 
 if __name__ == "__main__":
-    model = ResNet50(loader=Loader.ResNet50_simple_loader())
+    model = ResNet50(loader=Loader.ResNet50_inf_loader())
     print(model)
