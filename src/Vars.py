@@ -23,6 +23,8 @@ NUMPY_CIFAR_TRAIN = join(pardir, "datasets", "Train")
 NUMPY_CIFAR_TEST = join(pardir, "datasets", "Test")
 # Path of pretrained model
 MODELS_PATH = join(pardir, "models")
+#
+FOURIER = join(pardir, "datasets", "Fourier")
 
 # Steps of PGD optimization for robust image creation
 ROBUST_STEPS = 1000

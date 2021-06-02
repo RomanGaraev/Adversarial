@@ -1,6 +1,6 @@
 from Visualization import confusion_mat
-from Loader import ResNet50_simple_loader, CIFAR10
-from Model import ResNet
+from Loader import ResNet50_simple_loader, CIFAR10, ResNet50_0_loader
+from Model import ResNet, ResNetFeat
 from Vars import device
 
 from sklearn.metrics import confusion_matrix
@@ -21,6 +21,6 @@ def test(model, dataloader):
 
 
 if __name__ == "__main__":
-    pred, Y = test(model=ResNet(loader=ResNet50_simple_loader(dataset=CIFAR10())),
+    pred, Y = test(model=ResNet(loader=ResNet50_simple_loader()),
                    dataloader=CIFAR10().get_loaders()['test'])
     confusion_mat(confusion_matrix(y_true=Y, y_pred=pred), save=False, case="Regular CIFAR-10 test set")

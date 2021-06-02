@@ -1,5 +1,5 @@
 from Visualization import compare, plot_spector
-from Vars import ROBUST_STEPS, device
+from Vars import ROBUST_STEPS, device, FOURIER
 import Loader
 import Model
 
@@ -117,23 +117,20 @@ def Fourier(model=Model.CustomModel, data_loader=Loader.CustomSetLoader):
     # [0] == train set loader
     loader = data_loader.get_loaders()['train']
     iterator = iter(loader)
-    inner_i = 1
     # Current image and label, will be update in loop
-    for x, y in iterator:
+    for x, y in tqdm(iterator):
         cuda.empty_cache()
-        # Copy random image to let it saf e
-        x_copy = x.clone()
-        x_copy.requires_grad = True
         g1 = model(x.to(device))
         g1_f = np.fft.fft(g1.cpu().detach().numpy())
-        plot_spector(g1_f[0], y[0])
-        print(g1_f.shape, g1.shape)
-        break
+        robust_set.add(g1_f, y.data)
+    robust_set.save(path=FOURIER)
+
 
 def create_non_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader):
     raise NotImplementedError
 
 
 if __name__ == '__main__':
-    model = Model.ResNetFeat(loader=Loader.ResNet50_0_loader())
-    Fourier(model=model, data_loader=Loader.CIFAR10())
+    model = Model.ResNetFeat(loader=Loader.ResNet50_simple_loader())
+    #Fourier(model=model, data_loader=Loader.CIFAR10())
+    create_robust(model=Model.ResNetFeat(), data_loader=Loader.CIFAR10())

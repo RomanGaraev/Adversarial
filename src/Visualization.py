@@ -51,7 +51,7 @@ def image_show(image, label):
 def plot_spector(image, label):
     im_x = image.real
     im_y = image.imag
-    plt.plot(im_x, im_y)
+    plt.scatter(im_x, im_y)
     plt.suptitle("Image class: " + CIFAR_Labels[label.data])
     plt.show()
 

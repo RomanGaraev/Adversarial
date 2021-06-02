@@ -3,6 +3,7 @@ import Loader
 
 from shap import GradientExplainer
 from torch import nn, stack
+from torch.fft import fft
 from numpy import random
 
 
@@ -43,7 +44,14 @@ class ResNetFeat(CustomModel):
     def __init__(self, loader=Loader.ResNet50_l2_0_5_loader()):
         super(ResNetFeat, self).__init__(loader)
         pretrained_model = super().get_model()
-        self.model = nn.Sequential(pretrained_model[:-1], nn.Flatten())
+
+        squeezed = []
+        for i in range(len(pretrained_model) - 1):
+            squeezed.append(pretrained_model[i])
+
+        squeezed.extend(list(pretrained_model[-1].children())[:-1])
+        self.model = nn.Sequential(*squeezed, nn.Flatten())
+
 
     def forward(self, x):
         return self.model(x)
@@ -53,7 +61,12 @@ class ResNetSHAP(CustomModel):
     def __init__(self, data_loader: Loader.CustomSetLoader(), loader=Loader.ResNet50_l2_0_5_loader()):
         super(ResNetSHAP, self).__init__(loader)
         pretrained_model = super().get_model()
-        self.model = nn.Sequential(pretrained_model[:-1], nn.Flatten())
+        squeezed = []
+        for i in range(len(pretrained_model) - 1):
+            squeezed.append(pretrained_model[i])
+
+        squeezed.extend(list(pretrained_model[-1].children())[:-1])
+        self.model = nn.Sequential(*squeezed, nn.Flatten())
         self.data = data_loader
         # Train shap explainer
         train, _ = self.data.load()
@@ -66,6 +79,24 @@ class ResNetSHAP(CustomModel):
         return self.explainer.shap_values(x)
 
 
+class ResNetFourier(CustomModel):
+    def __init__(self, loader=Loader.ResNet50_l2_0_5_loader()):
+        super(ResNetFourier, self).__init__(loader)
+        pretrained_model = super().get_model()
+        squeezed = []
+        for i in range(len(pretrained_model) - 1):
+            squeezed.append(pretrained_model[i])
+
+        squeezed.extend(list(pretrained_model[-1].children())[:-1])
+        self.model = nn.Sequential(*squeezed, nn.Flatten())
+        self.filter = nn.Linear(in_features=32768, out_features=10)
+
+    def forward(self, x):
+        x = fft(self.model(x), norm="ortho")
+        #x = self.filter(x.float())
+        return x
+
+
 if __name__ == "__main__":
-    model = ResNet(loader=Loader.ResNet50_simple_loader())
+    model = ResNet(loader=Loader.ResNet50_0_loader())
     print(model)

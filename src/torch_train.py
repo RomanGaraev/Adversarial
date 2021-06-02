@@ -1,6 +1,7 @@
 from Vars import MODELS_PATH, device
 from torch_test import test
 import Loader
+import Model
 
 from torchvision.models.resnet import resnet50
 from os.path import join
@@ -10,7 +11,7 @@ import torch
 
 def train_step(train_loader, model, optimizer):
     torch.cuda.empty_cache()
-    model.train()
+    #model.train()
     model.to(device)
     bar = tqdm(train_loader)
     criteria = torch.nn.CrossEntropyLoss()
@@ -39,17 +40,22 @@ def train(model, data_loader: Loader.CustomSetLoader):
     dict_load = data_loader.get_loaders()
     train_loader = dict_load['train']
     val_loader = dict_load['test']
-    learning_rate = 0.1
+    learning_rate = 0.0001
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=0.0005)
     for epoch in range(70):
         print("Epoch ", epoch)
         adjust_learning_rate(optimizer, epoch, learning_rate)
         model = train_step(train_loader, model, optimizer)
         test(model, val_loader)
-        torch.save(model.state_dict(), join(MODELS_PATH, "resnet50.pt"))
+        torch.save(model.state_dict(), join(MODELS_PATH, "resnet50_four.pt"))
+        if epoch >= 15:
+            model.model.train()
 
 
 if __name__ == "__main__":
-    model50 = resnet50()
-    model50.fc = torch.nn.Linear(2048, 10)
+    model50 = Model.ResNet(loader=Loader.ResNet50_0_loader())
+    #model50 = resnet50()
+    #model50.fc = torch.nn.Linear(2048, 10)
+    #model50.model.eval()
+    #model50.filter.train()
     train(model=model50, data_loader=Loader.NumpyCIFAR10())

@@ -107,7 +107,8 @@ class ResNet50_simple_loader(ModelLoader):
         pretrained_model = models.resnet50()
         pretrained_model.fc = nn.Linear(2048, 10)
         pretrained_model.load_state_dict(ch_load(join(MODELS_PATH, "resnet50.pt")))
-        return nn.Sequential(*list(pretrained_model.children()))
+        #return nn.Sequential(*list(pretrained_model.children()))
+        return nn.Sequential(pretrained_model)
 
 
 class Inception_loader(ModelLoader):
@@ -133,8 +134,8 @@ class ResNet50_common_loader(ModelLoader):
         super(ResNet50_common_loader, self).load()
         pretrained_model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=self.dataset,
                                                                  resume_path=join(MODELS_PATH, name))
-        return nn.Sequential(*[pretrained_model.normalizer, *list(pretrained_model.model.children())])
-
+        #return nn.Sequential(*[pretrained_model.normalizer, *list(pretrained_model.model.children())])
+        return nn.Sequential(pretrained_model.normalizer, pretrained_model.model)
 
 # Epsilon = 0
 class ResNet50_0_loader(ResNet50_common_loader):

@@ -1,6 +1,6 @@
 from Loader import CustomSetLoader, CustomSet, CIFAR10, ResNet50_l2_0_5_loader, ResNet50_0_loader
-from Model import CustomModel, ResNet, ResNetFeat
-from Visualization import confusion_mat
+from Model import CustomModel, ResNet, ResNetFeat, ResNetFourier
+from Visualization import confusion_mat, plot_spector
 from Vars import ATTACK_PATH
 
 from art.estimators.classification import PyTorchClassifier
@@ -30,19 +30,25 @@ class Attack:
         self.adv_examples = CustomSet()
 
     def make_attack(self, attack):
+        four_model = ResNetFourier(loader=ResNet50_0_loader())
         bar = tqdm(self.loader)
         print("Start creating adversarial examples...")
         y = []
         y_pred = []
         for X, y in bar:
             clipped = attack.generate(X)
-            pred = argmax(self.f_model.predict(clipped), axis=1)
-            y_pred.extend(pred)
-            y.extend(y)
-            self.adv_examples.add(clipped, y.detach().cpu().numpy())
-
-        print("Adversarial examples are created!")
-        return confusion_matrix(y_true=y, y_pred=y_pred)
+            #four_1 = four_model(clipped)
+            #four_2 = four_model(X)
+            #pred = argmax(self.f_model.predict(clipped), axis=1)
+            #y_pred.extend(pred)
+            #y.extend(y)
+            #self.adv_examples.add(clipped, y.detach().cpu().numpy())
+            #print(four_1 - four_2)
+            #plot_spector(four_1[0], y.data[0])
+            #plot_spector(four_2[0], y.data[0])
+            break
+        #print("Adversarial examples are created!")
+        #return confusion_matrix(y_true=y, y_pred=y_pred)
 
     def save(self, path=ATTACK_PATH):
         self.adv_examples.save(path)
@@ -71,10 +77,10 @@ def attacks_test(repeats=3, epsilon=0.25):
 
 if __name__ == "__main__":
     #attacks_test()
-    model = Attack(model=ResNet(loader=ResNet50_l2_0_5_loader(dataset=CIFAR10())),
+    model = Attack(model=ResNet(loader=ResNet50_0_loader()),
                    data_loader=CIFAR10().get_loaders()['test'])
     model_f = model.f_model
-    attack = ev.ProjectedGradientDescentPyTorch(estimator=model_f, norm=inf, eps=0.025, max_iter=5, verbose=False)
-    test_model = ResNetFeat(loader=ResNet50_0_loader())
-    confusion_mat(model.make_attack(attack=attack), case="PGD-linf-5", save=False)
+
+    attack = ev.FastGradientMethod(estimator=model_f, norm=inf, eps=0.25,)
+    #confusion_mat(model.make_attack(attack=attack), case="PGD-linf-5", save=False)
     model.make_attack(attack=attack)
