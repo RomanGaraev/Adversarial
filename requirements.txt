@@ -1,0 +1,13 @@
+torch~=1.7.0+cu101
+torchvision~=0.8.1+cu101
+matplotlib~=3.3.3
+shap~=0.37.0
+adversarial-robustness-toolbox
+robustness~=1.2.1.post1
+numpy~=1.19.5
+tqdm~=4.50.2
+
+sklearn~=0.0
+scikit-learn~=0.23.2
+tensorflow~=2.4.1
+tensorflow-gpu~=2.3.1

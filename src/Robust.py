@@ -1,10 +1,11 @@
+from Visualization import compare, plot_spector
 from Vars import ROBUST_STEPS, device
-from Visualization import compare
 import Loader
 import Model
 
 from torch import norm, renorm, clamp, cuda
 from tqdm.auto import tqdm
+import numpy as np
 
 
 def PGD_optim_l2(x, eps=0.5, alpha=0.1):
@@ -110,10 +111,29 @@ def create_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader, o
     return robust_set
 
 
+def Fourier(model=Model.CustomModel, data_loader=Loader.CustomSetLoader):
+    model.to(device)
+    robust_set = Loader.CustomSet()
+    # [0] == train set loader
+    loader = data_loader.get_loaders()['train']
+    iterator = iter(loader)
+    inner_i = 1
+    # Current image and label, will be update in loop
+    for x, y in iterator:
+        cuda.empty_cache()
+        # Copy random image to let it saf e
+        x_copy = x.clone()
+        x_copy.requires_grad = True
+        g1 = model(x.to(device))
+        g1_f = np.fft.fft(g1.cpu().detach().numpy())
+        plot_spector(g1_f[0], y[0])
+        print(g1_f.shape, g1.shape)
+        break
+
 def create_non_robust(model=Model.CustomModel, data_loader=Loader.CustomSetLoader):
     raise NotImplementedError
 
 
 if __name__ == '__main__':
-    model = Model.ResNet50Feat(loader=Loader.ResNet50_inf_loader())
-    create_robust(model=model, data_loader=Loader.CIFAR10(), plot=True)
+    model = Model.ResNetFeat(loader=Loader.ResNet50_0_loader())
+    Fourier(model=model, data_loader=Loader.CIFAR10())

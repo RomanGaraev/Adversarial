@@ -3,7 +3,6 @@ from torch_test import test
 import Loader
 
 from torchvision.models.resnet import resnet50
-import numpy as np
 from os.path import join
 from tqdm import tqdm
 import torch
@@ -24,18 +23,6 @@ def train_step(train_loader, model, optimizer):
         bar.set_postfix({"Loss": format(loss, '.4f')})
         optimizer.zero_grad()
     return model
-
-
-def test(model, dataloader):
-    pred = []
-    Y = []
-    for X, y in tqdm(dataloader):
-        y_pred = np.argmax(model(X.cuda()).cpu().detach().numpy(), axis=1)
-        pred.extend(y_pred)
-        Y.extend(y.cpu().detach().numpy())
-    acc = len([i for i, x in enumerate(pred) if Y[i] == x]) / len(pred)
-    print(f"Test accuracy: {acc}")
-    return pred, Y
 
 
 def adjust_learning_rate(optimizer, epoch, lr):

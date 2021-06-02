@@ -6,7 +6,7 @@ environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 # Amount of image samples, used in data loader
-BATCH_SIZE = 4
+BATCH_SIZE = 2
 # Threads for data loader
 WORKERS = 4
 

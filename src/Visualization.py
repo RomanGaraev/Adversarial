@@ -1,4 +1,5 @@
 from Vars import CIFAR_Labels, PLOTS_PATH
+from Loader import NumpyCIFAR10
 
 from numpy import arange, transpose, trace
 import matplotlib.pyplot as plt
@@ -47,6 +48,14 @@ def image_show(image, label):
     plt.show()
 
 
+def plot_spector(image, label):
+    im_x = image.real
+    im_y = image.imag
+    plt.plot(im_x, im_y)
+    plt.suptitle("Image class: " + CIFAR_Labels[label.data])
+    plt.show()
+
+
 def confusion_mat(conf, labels=CIFAR_Labels, save=False, case="PGD-100-linf-0,025"):
     """
     Draw confusion matrix from
@@ -91,7 +100,6 @@ def confusion_mat(conf, labels=CIFAR_Labels, save=False, case="PGD-100-linf-0,02
  [385, 1336,  221,  526,  219,  274,  295,  344,  884,  516]]), save=False, case="FGSM-1-linf-0,0314")"""
 
 
-from Loader import NumpyCIFAR10
 if __name__ == "__main__":
     data = NumpyCIFAR10()
     train = data.get_loaders()['train']

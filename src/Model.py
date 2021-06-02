@@ -2,8 +2,8 @@ from Vars import SHAP_TRAIN_SIZE, device
 import Loader
 
 from shap import GradientExplainer
-from numpy import random
 from torch import nn, stack
+from numpy import random
 
 
 # Base class for NN models
@@ -27,9 +27,9 @@ class CustomModel(nn.Module):
 
 
 # loader=Loader.ResNet50_simple_loader(Loader.CIFAR10())
-class ResNet50(CustomModel):
+class ResNet(CustomModel):
     def __init__(self, loader=Loader.ResNet50_0_loader()):
-        super(ResNet50, self).__init__(loader)
+        super(ResNet, self).__init__(loader)
         pretrained_model = super().get_model()
         self.loader = loader
         self.model = nn.Sequential(pretrained_model, nn.Softmax())
@@ -39,24 +39,21 @@ class ResNet50(CustomModel):
 
 
 # ResNet without penultimate layer
-class ResNet50Feat(CustomModel):
+class ResNetFeat(CustomModel):
     def __init__(self, loader=Loader.ResNet50_l2_0_5_loader()):
-        super(ResNet50Feat, self).__init__(loader)
+        super(ResNetFeat, self).__init__(loader)
         pretrained_model = super().get_model()
-        self.loader = loader
-        self.model = nn.Sequential(pretrained_model.normalizer,
-                                   *list(pretrained_model.model.children())[:-1], nn.Flatten())
+        self.model = nn.Sequential(pretrained_model[:-1], nn.Flatten())
 
     def forward(self, x):
         return self.model(x)
 
 
-class ResNet50SHAP(CustomModel):
-    def __init__(self, data_loader=Loader.CustomSetLoader(), loader=Loader.ResNet50_l2_0_5_loader()):
-        super(ResNet50SHAP, self).__init__(loader)
+class ResNetSHAP(CustomModel):
+    def __init__(self, data_loader: Loader.CustomSetLoader(), loader=Loader.ResNet50_l2_0_5_loader()):
+        super(ResNetSHAP, self).__init__(loader)
         pretrained_model = super().get_model()
-        self.model = nn.Sequential(pretrained_model.normalizer,
-                                   *list(pretrained_model.model.children())[:-1], nn.Flatten())
+        self.model = nn.Sequential(pretrained_model[:-1], nn.Flatten())
         self.data = data_loader
         # Train shap explainer
         train, _ = self.data.load()
@@ -69,17 +66,6 @@ class ResNet50SHAP(CustomModel):
         return self.explainer.shap_values(x)
 
 
-class ResNet18(CustomModel):
-    def __init__(self, loader=Loader.ResNet18_loader()):
-        super(ResNet18, self).__init__(loader)
-        pretrained_model = super().get_model()
-        self.loader = loader
-        self.model = nn.Sequential(pretrained_model, nn.Softmax())
-
-    def forward(self, x):
-        return self.model(x)
-
-
 if __name__ == "__main__":
-    model = ResNet50(loader=Loader.ResNet50_inf_loader())
+    model = ResNet(loader=Loader.ResNet50_simple_loader())
     print(model)
